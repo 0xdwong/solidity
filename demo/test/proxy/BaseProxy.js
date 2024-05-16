@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 
-describe.only("BaseProxy", async () => {
+describe("BaseProxy", async () => {
     let accounts, owner;
     let logicCA, logicCAAddr; // 逻辑合约
     let proxyCA, proxyCAAddr; // 代理合约,具有代理合约的 ABI
@@ -26,7 +26,6 @@ describe.only("BaseProxy", async () => {
 
             proxyAsLogicCA = await ethers.getContractAt("LogicContract", proxyCAAddr);
         }
-        console.log('====address====', { logicCAAddr, proxyCAAddr });
     }
 
     beforeEach(async () => {
@@ -40,13 +39,15 @@ describe.only("BaseProxy", async () => {
     })
 
     describe("getCount", async () => {
-        it.only("count should be 1", async () => {
-            const count = await proxyAsLogicCA.getCount();
-            console.log('====count====', count);
+        it("count should be 1", async () => {
+            const count1 = await proxyAsLogicCA.getCount();
 
-            // expect(await proxyCA.incrementCounter()).to.equal(name);
+            await proxyAsLogicCA.incrementCounter()
 
-            expect(count).to.equal(0);
+            const count2 = await proxyAsLogicCA.getCount();
+
+            expect(count1).to.equal(0);
+            expect(count2).to.equal(1);
         });
     })
 });
