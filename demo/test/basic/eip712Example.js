@@ -13,7 +13,7 @@ async function init() {
     instanceAddr = await instance.getAddress();
 }
 
-describe.only('EIP712Example', () => {
+describe('EIP712Example', () => {
 
     before(async () => {
         await init();
