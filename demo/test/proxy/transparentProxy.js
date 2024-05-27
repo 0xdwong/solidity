@@ -26,7 +26,7 @@ describe.only("TransparentProxy", async () => {
             proxyCA = await ethers.deployContract("TransparentProxy", [logicCAAddr]);
             proxyCAAddr = await proxyCA.getAddress();
 
-            proxyAsLogicCA = await ethers.getContractAt("LogicContract", proxyCAAddr);
+            proxyAsLogicCA = await ethers.getContractAt("TLogic", proxyCAAddr);
         }
     }
 
@@ -56,20 +56,6 @@ describe.only("TransparentProxy", async () => {
             await proxyCA.connect(admin).upgradeLogic(newLogicAddr);
             expect(await proxyCA.logicAddress()).to.equal(newLogicAddr);
 
-        });
-
-        it("only admin can update admin address", async function () {
-            let randomAccount = accounts[9];
-            let newAdminAddr = await randomAccount.getAddress();
-
-            // not admin should revert
-            await expect(
-                proxyCA.connect(randomAccount).upgradAdmin(newAdminAddr)
-            ).to.be.revertedWith('Only admin');
-
-            // admin upgradAdmin
-            await proxyCA.connect(admin).upgradAdmin(newAdminAddr);
-            expect(await proxyCA.adminAddress()).to.equal(newAdminAddr);
         });
     })
 

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 contract TLogic {
     address public logicAddress; // 防止存储冲突
     address public adminAddress; // 防止存储冲突
@@ -22,22 +20,14 @@ contract TransparentProxy {
     address public adminAddress; // 管理员地址
     uint public count;
 
-    constructor(address _logic) {
-        logicAddress = _logic;
+    constructor(address logic) {
+        logicAddress = logic;
         adminAddress = msg.sender;
     }
 
-    modifier onlyAdmin() {
+    function upgradeLogic(address newLogic) public {
         require(msg.sender == adminAddress, "Only admin");
-        _;
-    }
-
-    function upgradeLogic(address _newLogic) public onlyAdmin {
-        logicAddress = _newLogic;
-    }
-
-    function upgradAdmin(address _newAdmin) public onlyAdmin {
-        adminAddress = _newAdmin;
+        logicAddress = newLogic;
     }
 
     fallback() external payable {
