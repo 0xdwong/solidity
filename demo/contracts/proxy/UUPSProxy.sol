@@ -1,10 +1,46 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract UUPSLogic {
-    address public logicAddress; // 防止存储冲突
-    address public adminAddress; // 防止存储冲突
+
+contract BaseUUPSLogic{
+    constructor(){
+    }
+
+    // UUPS Proxiable interface
+    function updateCodeAddress(address newAddress) public {
+        require(
+            bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc) == Proxiable(newAddress).proxiableUUID(),
+            "Not compatible"
+        );
+        assembly { // solium-disable-line
+            sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, newAddress)
+        }
+    }
+
+    function proxiableUUID() public pure returns (bytes32) {
+        return 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    }
+
+    function _authorizeUpgrade() internal{
+        // 实现自己的逻辑控制权限，eg:
+
+        address admin;
+
+        assembly {
+            admin := sload(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103);//ERC-1967 ADMIN_SLOT
+        }
+
+        require(msg.sender = , "only admin");
+        _;
+    }
+}
+
+contract ULogic is BaseUUPSLogic{
     uint public count;
+
+    constructor() BaseUUPSLogic{
+
+    }
 
     function incrementCounter() public {
         count += 1;
@@ -13,22 +49,17 @@ contract UUPSLogic {
     function getCount() public view returns (uint) {
         return count;
     }
-
-    function upgradeLogic(address newLogic) public {
-        require(msg.sender == adminAddress, "Only admin");
-        logicAddress = newLogic;
-    }
 }
 
 contract UUPSProxy {
-    address public logicAddress; // 逻辑合约地址
-    address public adminAddress; // 管理员地址
     uint public count;
 
-    constructor(address logic) {
-        logicAddress = logic;
-        adminAddress = msg.sender;
+    constructor(address logicAddress) {
+        sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, logicAddress);//ERC-1967 IMPLEMENTATION_SLOT
+        sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, msg.sender);//ERC-1967 ADMIN_SLOT
     }
+
+    
 
     fallback() external payable {
         _fallback(logicAddress);
