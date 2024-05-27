@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract LogicContract {
+contract TLogic {
     address public logicAddress; // 防止存储冲突
     address public adminAddress; // 防止存储冲突
     uint public count;
@@ -18,8 +18,8 @@ contract LogicContract {
 }
 
 contract TransparentProxy {
-    address public logicAddress;
-    address public adminAddress;
+    address public logicAddress; // 逻辑合约地址
+    address public adminAddress; // 管理员地址
     uint public count;
 
     constructor(address _logic) {
@@ -27,12 +27,17 @@ contract TransparentProxy {
         adminAddress = msg.sender;
     }
 
-    modifier onlyAdmin(){
+    modifier onlyAdmin() {
         require(msg.sender == adminAddress, "Only admin");
+        _;
     }
-    
-    function upgradeLogic(address _newLogic) public onlyAdmin{
+
+    function upgradeLogic(address _newLogic) public onlyAdmin {
         logicAddress = _newLogic;
+    }
+
+    function upgradAdmin(address _newAdmin) public onlyAdmin {
+        adminAddress = _newAdmin;
     }
 
     fallback() external payable {
