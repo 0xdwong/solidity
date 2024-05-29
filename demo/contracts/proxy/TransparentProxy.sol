@@ -31,6 +31,7 @@ contract TransparentProxy {
     }
 
     fallback() external payable {
+        require(msg.sender != adminAddress, "Admin not allowed");
         _fallback(logicAddress);
     }
 
