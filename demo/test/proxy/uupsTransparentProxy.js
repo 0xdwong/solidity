@@ -2,11 +2,13 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 
-describe.only("UUPSProxy", async () => {
+describe("UUPSProxy", async () => {
     let accounts, owner, admin;
     let logicCA, logicCAAddr; // 逻辑合约
     let proxyCA, proxyCAAddr; // 代理合约,具有代理合约的 ABI
     let proxyAsLogicCA; // 代理合约,具有逻辑合约的 ABI,交互用
+    const ImplementSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+    const Adminslot = '0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103';
 
 
     async function init() {
@@ -30,17 +32,27 @@ describe.only("UUPSProxy", async () => {
         }
     }
 
+    async function getAddAtSlot(contract, slot) {
+        const value = await ethers.provider.getStorage(contract, slot);
+        const address = ethers.getAddress(ethers.dataSlice(value, 12, 32));
+        return address;
+    }
+
     beforeEach(async () => {
         await init();
     })
 
     describe("proxy", async () => {
         it("should correctly set logic address in proxy", async function () {
-            expect(await proxyCA.logicAddress()).to.equal(logicCAAddr);
+            const logic = await getAddAtSlot(proxyCA, ImplementSlot);
+
+            expect(logic).to.equal(logicCAAddr);
         });
 
         it("should correctly set admin address in proxy", async function () {
-            expect(await proxyCA.adminAddress()).to.equal(adminAddr);
+            const admin = await getAddAtSlot(proxyCA, Adminslot);
+
+            expect(admin).to.equal(adminAddr);
         });
 
         it("only admin can update logic address", async function () {
@@ -54,8 +66,7 @@ describe.only("UUPSProxy", async () => {
 
             // admin upgradeLogic
             await proxyAsLogicCA.connect(admin).upgradeLogic(newLogicAddr);
-            expect(await proxyCA.logicAddress()).to.equal(newLogicAddr);
-
+            expect(await getAddAtSlot(proxyCA, ImplementSlot)).to.equal(newLogicAddr);
         });
     })
 
