@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 contract TLogic {
-    address public logicAddress; // 防止存储冲突
-    address public adminAddress; // 防止存储冲突
     uint public count;
 
     function incrementCounter() public {
@@ -16,27 +14,66 @@ contract TLogic {
 }
 
 contract TransparentProxy {
-    address public logicAddress; // 逻辑合约地址
-    address public adminAddress; // 管理员地址
     uint public count;
 
     constructor(address logic) {
-        logicAddress = logic;
-        adminAddress = msg.sender;
+        // 设置逻辑合约地址，存储到特定槽(bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1))
+        assembly {
+            sstore(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc,
+                logic
+            )
+        }
+        // 设置管理员地址，存储到特定槽（bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1)）
+        address admin = msg.sender;
+        assembly {
+            sstore(
+                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103,
+                admin
+            )
+        }
     }
 
     function upgradeLogic(address newLogic) public {
-        require(msg.sender == adminAddress, "Only admin");
-        logicAddress = newLogic;
+        require(msg.sender == _admin(), "Only admin");
+
+        assembly {
+            sstore(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc,
+                newLogic
+            )
+        }
+    }
+
+    function _logic() internal view returns (address logic) {
+        uint256 value;
+        assembly {
+            value := sload(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+            )
+        }
+
+        return address(uint160(value));
+    }
+
+    function _admin() internal view returns (address admin) {
+        uint256 value;
+        assembly {
+            value := sload(
+                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+            )
+        }
+
+        return address(uint160(value));
     }
 
     fallback() external payable {
-        require(msg.sender != adminAddress, "Admin not allowed");
-        _fallback(logicAddress);
+        require(msg.sender != _admin(), "Admin not allowed");
+        _fallback(_logic());
     }
 
     receive() external payable {
-        _fallback(logicAddress);
+        _fallback(_logic());
     }
 
     function _fallback(address logic) internal {

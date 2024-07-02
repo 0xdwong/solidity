@@ -1,46 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
-contract BaseUUPSLogic{
-    constructor(){
-    }
-
-    // UUPS Proxiable interface
-    function updateCodeAddress(address newAddress) public {
-        require(
-            bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc) == Proxiable(newAddress).proxiableUUID(),
-            "Not compatible"
-        );
-        assembly { // solium-disable-line
-            sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, newAddress)
-        }
-    }
-
-    function proxiableUUID() public pure returns (bytes32) {
-        return 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    }
-
-    function _authorizeUpgrade() internal{
-        // 实现自己的逻辑控制权限，eg:
-
-        address admin;
-
-        assembly {
-            admin := sload(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103);//ERC-1967 ADMIN_SLOT
-        }
-
-        require(msg.sender = , "only admin");
-        _;
-    }
-}
-
-contract ULogic is BaseUUPSLogic{
+contract UUPSLogic {
     uint public count;
 
-    constructor() BaseUUPSLogic{
-
-    }
+    constructor() {}
 
     function incrementCounter() public {
         count += 1;
@@ -49,24 +13,70 @@ contract ULogic is BaseUUPSLogic{
     function getCount() public view returns (uint) {
         return count;
     }
+
+    function upgradeLogic(address newAddress) public {
+        _authorizeUpgrade();
+
+        assembly {
+            sstore(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, //ERC-1967 IMPLEMENTSLOT
+                newAddress
+            )
+        }
+    }
+
+    function _authorizeUpgrade() internal {
+        // 实现自己的逻辑控制权限，eg:
+        address value;
+
+        assembly {
+            value := sload(
+                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+            ) //ERC-1967 ADMIN_SLOT
+        }
+
+        address admin = address(uint160(value));
+
+        require(msg.sender == admin, "Only admin");
+    }
 }
 
 contract UUPSProxy {
     uint public count;
 
     constructor(address logicAddress) {
-        sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, logicAddress);//ERC-1967 IMPLEMENTATION_SLOT
-        sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, msg.sender);//ERC-1967 ADMIN_SLOT
+        address admin = msg.sender;
+
+        assembly {
+            sstore(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc,
+                logicAddress
+            ) //ERC-1967 IMPLEMENTATION_SLOT
+
+            sstore(
+                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103,
+                admin
+            ) //ERC-1967 ADMIN_SLOT
+        }
     }
 
-    
+    function _logic() internal view returns (address logic) {
+        uint256 value;
+        assembly {
+            value := sload(
+                0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+            )
+        }
+
+        return address(uint160(value));
+    }
 
     fallback() external payable {
-        _fallback(logicAddress);
+        _fallback(_logic());
     }
 
     receive() external payable {
-        _fallback(logicAddress);
+        _fallback(_logic());
     }
 
     function _fallback(address logic) internal {

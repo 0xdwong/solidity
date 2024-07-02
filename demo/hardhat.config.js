@@ -67,14 +67,6 @@ module.exports = {
             },
             chainId: 1,
         },
-        goerli: {
-            url: 'https://ethereum-goerli.publicnode.com',
-            saveDeployments: true,
-            accounts: {
-                mnemonic: mnemonic,
-            },
-            chainId: 5,
-        },
         sepolia: {
             url: 'https://rpc.sepolia.org',
             saveDeployments: true,
