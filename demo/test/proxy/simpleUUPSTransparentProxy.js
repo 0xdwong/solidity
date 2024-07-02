@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 
-describe.only("SimpleUUPSTransparentProxy", async () => {
+describe("SimpleUUPSTransparentProxy", async () => {
     let accounts, owner, admin;
     let logicCA, logicCAAddr; // 逻辑合约
     let proxyCA, proxyCAAddr; // 代理合约,具有代理合约的 ABI

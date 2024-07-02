@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 
-describe.only("TransparentProxy", async () => {
+describe("SimpleTransparentProxy", async () => {
     let accounts, owner, admin;
     let logicCA, logicCAAddr; // 逻辑合约
     let proxyCA, proxyCAAddr; // 代理合约,具有代理合约的 ABI
@@ -17,16 +17,16 @@ describe.only("TransparentProxy", async () => {
 
         // 部署逻辑合约
         {
-            logicCA = await ethers.deployContract("TLogic");
+            logicCA = await ethers.deployContract("SimpleTLogic");
             logicCAAddr = await logicCA.getAddress();
         }
 
         // 部署代理合约
         {
-            proxyCA = await ethers.deployContract("TransparentProxy", [logicCAAddr]);
+            proxyCA = await ethers.deployContract("SimpleTransparentProxy", [logicCAAddr]);
             proxyCAAddr = await proxyCA.getAddress();
 
-            proxyAsLogicCA = await ethers.getContractAt("TLogic", proxyCAAddr);
+            proxyAsLogicCA = await ethers.getContractAt("SimpleTLogic", proxyCAAddr);
         }
     }
 
@@ -59,13 +59,23 @@ describe.only("TransparentProxy", async () => {
         });
     })
 
+    describe("admin", async () => {
+        it('should revert "Admin not allowed"', async () => {
+            await expect(
+                proxyAsLogicCA.connect(admin).getCount()
+            ).to.be.revertedWith("Admin not allowed");
+        });
+    })
+
     describe("getCount", async () => {
-        it("count should be 1", async () => {
-            const count1 = await proxyAsLogicCA.getCount();
+        it("count should be 1 after calling incrementCounter()", async () => {
+            const notAdmin = accounts[9]; // call by admin will fail,see above
 
-            await proxyAsLogicCA.incrementCounter()
+            const count1 = await proxyAsLogicCA.connect(notAdmin).getCount();
 
-            const count2 = await proxyAsLogicCA.getCount();
+            await proxyAsLogicCA.connect(notAdmin).incrementCounter()
+
+            const count2 = await proxyAsLogicCA.connect(notAdmin).getCount();
 
             expect(count1).to.equal(0);
             expect(count2).to.equal(1);

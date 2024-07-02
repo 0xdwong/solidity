@@ -11,7 +11,7 @@ async function init() {
     instanceAddr = await instance.getAddress();
 }
 
-describe.only('Counter', () => {
+describe('Counter', () => {
 
     before(async () => {
         await init();
