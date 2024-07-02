@@ -6,7 +6,8 @@
         "compile": "npx hardhat compile",
         "test": "npx hardhat test",
         "chain": "npx hardhat node --network hardhat",
-        "deploy": "npx hardhat run scripts/deploy.js --network"
+        "deploy": "npx hardhat run scripts/deploy.js --network",
+        "coverage": "npx hardhat coverage --network hardhat"
     },
     "author": "",
     "license": "ISC",
