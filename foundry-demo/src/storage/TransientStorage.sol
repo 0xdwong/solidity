@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.28;
 
-contract TransientStorage {
+contract TransientStorageAssembly {
+
     function example() public {
         assembly {
             // 存储值
@@ -14,3 +15,15 @@ contract TransientStorage {
         }
     }
 }
+
+contract TMultiplier {
+    uint public transient multiplier;
+
+    function setMultiplier(uint mul) external {
+        multiplier = mul;
+    }
+
+    function multiply(uint value) external view returns (uint) {
+        return value * multiplier;
+    }
+} 
